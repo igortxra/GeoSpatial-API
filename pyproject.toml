@@ -1,0 +1,12 @@
+[project]
+name = "urbansdk"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipython==7.23.1",
+    "jupyterlab>=4.5.4",
+    "notebook>=7.5.3",
+    "pip>=26.0.1",
+]
