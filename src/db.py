@@ -1,0 +1,64 @@
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from geoalchemy2 import Geometry
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Engine, Integer, Float, DateTime, ForeignKey, String, create_engine
+from datetime import datetime
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Link(Base):
+
+    __tablename__ = "links"
+
+    id = Column(String, primary_key=True)
+
+    geom = Column(Geometry(geometry_type="LINESTRING", srid=4326), nullable=False)
+
+    speed_records = relationship("SpeedRecord", back_populates="link")
+
+
+class SpeedRecord(Base):
+    __tablename__ = "speed_records"
+
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    speed = Column(Float, nullable=False)
+    day_of_week = Column(Integer, nullable=False)
+    period = Column(Integer, nullable=False)
+
+    link_id = Column(String, ForeignKey("links.id"), index=True)
+
+    link = relationship("Link", back_populates="speed_records")
+
+
+# Index("idx_links_geom", Link.geom, postgresql_using="gist")
+
+
+_engine = None
+_SessionLocal = None
+
+
+def init_db(database_url: str):
+    global _engine, _SessionLocal
+
+    if _engine is None:
+        _engine = create_engine(database_url, pool_pre_ping=True)
+        _SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
+
+    Base.metadata.create_all(_engine)
+
+
+def get_engine() -> Engine:
+    if _engine is None:
+        raise RuntimeError("DB not initialized. Call init_db() first.")
+    return _engine
+
+
+def get_session():
+    if _SessionLocal is None:
+        raise RuntimeError("DB not initialized. Call init_db() first.")
+    return _SessionLocal()
+
