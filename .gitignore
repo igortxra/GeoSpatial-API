@@ -12,3 +12,6 @@ wheels/
 # Parquet Files
 *.parquet.gz
 *.parquet
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
