@@ -41,6 +41,7 @@ ipykernel==7.2.0
 ipython==7.23.1
 ipython-pygments-lexers==1.1.1
 isoduration==20.11.0
+isort==7.0.0
 jedi==0.19.2
 jinja2==3.1.6
 json5==0.13.0
@@ -89,6 +90,7 @@ pyarrow==23.0.0
 pycparser==3.0
 pydantic==2.12.5
 pydantic-core==2.41.5
+pydeck==0.9.1
 pygments==2.19.2
 pyogrio==0.12.1
 pyparsing==3.3.2
@@ -104,6 +106,7 @@ rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rfc3987-syntax==1.1.0
 rpds-py==0.30.0
+ruff==0.15.1
 send2trash==2.1.0
 setuptools==82.0.0
 shapely==2.1.2
