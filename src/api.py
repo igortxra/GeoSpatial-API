@@ -1,17 +1,17 @@
 import os
-from fastapi import Depends, FastAPI
-from pydantic import BaseModel
 from typing import Annotated, List
 
-from sqlalchemy import cast
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import select, func
+from fastapi import Depends, FastAPI
+from pydantic import BaseModel
+from sqlalchemy import Date, cast
 from sqlalchemy.dialects.postgresql import JSONB
-from src.db import Link, SpeedRecord, init_db, get_session
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import func, select
+
+from src.db import Link, SpeedRecord, get_session, init_db
 from src.types import Period, Weekday
 
-
-SessionDep = Annotated[Session , Depends(get_session)]
+SessionDep = Annotated[Session, Depends(get_session)]
 
 
 class SpatialFilterRequest(BaseModel):
@@ -25,7 +25,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def on_startup():
-        init_db(os.getenv("DATABASE_URL", "")) # TODO: Improve
+        init_db(os.getenv("DATABASE_URL", ""))  # TODO: Improve
 
     @app.get("/")
     def index():
@@ -40,12 +40,15 @@ def create_app() -> FastAPI:
             select(
                 Link.id.label("road_name"),
                 func.avg(SpeedRecord.speed).label("average_speed"),
-                cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label("geometry"),
+                cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
+                    "geometry"
+                ),
             )
             .join(SpeedRecord, Link.id == SpeedRecord.link_id)
             .where(
-                SpeedRecord.day_of_week == weekday_code, 
-                SpeedRecord.period == period_code)
+                SpeedRecord.day_of_week == weekday_code,
+                SpeedRecord.period == period_code,
+            )
             .group_by(Link.id)
         )
 
@@ -53,17 +56,86 @@ def create_app() -> FastAPI:
 
         return result
 
+    @app.post("/aggregates/spatial_filter/")
+    def spatial_filter(payload: SpatialFilterRequest, session: SessionDep):
+        xmin, ymin, xmax, ymax = payload.bbox
+        period_code = Period.from_string(payload.period)
+        weekday_code = Weekday.from_string(payload.day)
+
+        stmt = (
+            select(
+                func.distinct(Link.id).label("road_name"),
+                cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
+            )
+            .join(SpeedRecord, SpeedRecord.link_id == Link.id)
+            .where(
+                func.ST_Intersects(
+                    Link.geom, func.ST_MakeEnvelope(xmin, ymin, xmax, ymax, 4326)
+                ),
+                SpeedRecord.period == period_code,
+                SpeedRecord.day_of_week == weekday_code,
+            )
+        )
+
+        result = session.execute(stmt).mappings().all()
+        return result
 
     @app.get("/aggregates/{link_id}")
-    def get_aggregate_by_link(link_id: str, day: str, period: str):
-        pass
+    def get_aggregate_by_link(link_id: str, day: str, period: str, session: SessionDep):
+        period_code = Period.from_string(period)
+        weekday_code = Weekday.from_string(day)
+
+        stmt = (
+            select(
+                Link.id.label("road_name"),
+                func.avg(SpeedRecord.speed).label("average_speed"),
+                cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
+                    "geometry"
+                ),
+            )
+            .join(SpeedRecord, Link.id == SpeedRecord.link_id)
+            .where(
+                Link.id == link_id,
+                SpeedRecord.day_of_week == weekday_code,
+                SpeedRecord.period == period_code,
+            )
+            .group_by(Link.id)
+        )
+
+        result = session.execute(stmt).mappings().first()
+
+        return result
 
     @app.get("/patterns/slow_links/")
-    def get_slow_links(period: str, threshold: float, min_days: int):
-        pass
+    def get_slow_links(
+        period: str, threshold: float, min_days: int, session: SessionDep
+    ):
+        """Return links with average speeds below a threshold for at least min_days in a week."""
 
-    @app.post("/aggregates/spatial_filter/")
-    def spatial_filter(payload: SpatialFilterRequest):
-        pass
+        period_code = Period.from_string(period)
+
+        stmt = (
+            select(
+                Link.id.label("road_name"),
+                cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
+            )
+            .join(SpeedRecord, SpeedRecord.link_id == Link.id)
+            .where(
+                SpeedRecord.period == period_code,
+            )
+            .group_by(
+                Link.id,
+                func.date_part("year", SpeedRecord.timestamp),
+                func.date_part("week", SpeedRecord.timestamp),
+            )
+            .having(
+                func.count(func.distinct(cast(SpeedRecord.timestamp, Date)))
+                >= min_days,
+                func.avg(SpeedRecord.speed) <= threshold,
+            )
+        )
+
+        result = session.execute(stmt).mappings().all()
+        return result
 
     return app

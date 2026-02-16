@@ -1,8 +1,9 @@
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from geoalchemy2 import Geometry
-from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Engine, Integer, Float, DateTime, ForeignKey, String, create_engine
 from datetime import datetime
+
+from geoalchemy2 import Geometry
+from sqlalchemy import (Column, DateTime, Engine, Float, ForeignKey, Integer,
+                        String, create_engine)
+from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
 
 
 class Base(DeclarativeBase):
@@ -10,11 +11,10 @@ class Base(DeclarativeBase):
 
 
 class Link(Base):
-
     __tablename__ = "links"
 
     id = Column(String, primary_key=True)
-
+    road_name = Column(String, nullable=True)
     geom = Column(Geometry(geometry_type="LINESTRING", srid=4326), nullable=False)
 
     speed_records = relationship("SpeedRecord", back_populates="link")
@@ -32,9 +32,6 @@ class SpeedRecord(Base):
     link_id = Column(String, ForeignKey("links.id"), index=True)
 
     link = relationship("Link", back_populates="speed_records")
-
-
-# Index("idx_links_geom", Link.geom, postgresql_using="gist")
 
 
 _engine = None
@@ -61,4 +58,3 @@ def get_session():
     if _SessionLocal is None:
         raise RuntimeError("DB not initialized. Call init_db() first.")
     return _SessionLocal()
-

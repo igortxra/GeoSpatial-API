@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Weekday(Enum):
     MONDAY = 1
     TUESDAY = 2
@@ -12,6 +13,7 @@ class Weekday(Enum):
     @classmethod
     def from_string(cls, day: str):
         return cls[day.upper()].value
+
 
 class Period(Enum):
     OVERNIGHT = 1
