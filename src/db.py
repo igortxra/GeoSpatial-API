@@ -2,7 +2,7 @@ from datetime import datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (Column, DateTime, Engine, Float, ForeignKey, Integer,
-                        String, create_engine)
+                        String, UniqueConstraint, create_engine)
 from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
 
 
@@ -32,6 +32,10 @@ class SpeedRecord(Base):
     link_id = Column(String, ForeignKey("links.id"), index=True)
 
     link = relationship("Link", back_populates="speed_records")
+    
+    __table_args__ = (
+        UniqueConstraint("timestamp", "link_id", name="uq_speedrecord_ts_link"),
+    )
 
 
 _engine = None

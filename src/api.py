@@ -38,7 +38,8 @@ def create_app() -> FastAPI:
 
         stmt = (
             select(
-                Link.id.label("road_name"),
+                Link.id,
+                func.min(Link.road_name).label("road_name"),
                 func.avg(SpeedRecord.speed).label("average_speed"),
                 cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
                     "geometry"
@@ -64,7 +65,8 @@ def create_app() -> FastAPI:
 
         stmt = (
             select(
-                func.distinct(Link.id).label("road_name"),
+                func.distinct(Link.id),
+                func.min(Link.road_name).label("road_name"),
                 cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
             )
             .join(SpeedRecord, SpeedRecord.link_id == Link.id)
@@ -87,7 +89,8 @@ def create_app() -> FastAPI:
 
         stmt = (
             select(
-                Link.id.label("road_name"),
+                Link.id,
+                func.min(Link.road_name).label("road_name"),
                 func.avg(SpeedRecord.speed).label("average_speed"),
                 cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
                     "geometry"
@@ -116,7 +119,8 @@ def create_app() -> FastAPI:
 
         stmt = (
             select(
-                Link.id.label("road_name"),
+                Link.id,
+                func.min(Link.road_name).label("road_name"),
                 cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
             )
             .join(SpeedRecord, SpeedRecord.link_id == Link.id)
