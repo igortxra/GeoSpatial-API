@@ -1,90 +1,109 @@
 import io
+import os
 import time
 
 import polars as pl
-import psycopg2
+import requests
 
-from src.db import init_db
+from src.db import get_session, init_db
 
 DATABASE_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/app"
-LINK_PARQUET = "./utils/link_info.parquet.gz"
-SPEED_RECORDS_PARQUET = "./utils/duval_jan1_2024.parquet.gz"
+FILENAME_LINKS_PARQUET = "./links.parquet.gz"
+FILENAME_SPEED_RECORDS_PARQUET = "./speed_records.parquet.gz"
 
-init_db(DATABASE_URL)
-
-conn = psycopg2.connect(dbname="app", user="postgres", password="postgres", host="localhost", port="5432")
-
+def download_parquet_file_from_cdn(path_to_download, file_url):
+    if not os.path.exists(path_to_download):
+        with requests.get(file_url, stream=True) as response:
+            with open(path_to_download, mode="wb") as file:
+                 for chunk in response.iter_content(chunk_size=10 * 1024):
+                     file.write(chunk)
 
 def ingest_links():
-    cur = conn.cursor()
-    cur.execute(""" CREATE TEMP TABLE links_raw (
-        link_id BIGINT,
-        geo_json TEXT
-    )
-    """)
+    with get_session() as session:
+        cur = session.connection().connection.cursor()
+        cur.execute(""" CREATE TEMP TABLE links_raw ( link_id BIGINT, geo_json TEXT, road_name TEXT) """)
 
-    columns = ["link_id", "geo_json"]
+        columns = ["link_id", "geo_json", "road_name"]
 
-    lazy_df = pl.scan_parquet(LINK_PARQUET).select(columns)
+        lazy_df = pl.scan_parquet(FILENAME_LINKS_PARQUET).select(columns)
 
-    cur = conn.cursor()
-    for batch in lazy_df.collect(engine="streaming").iter_slices(100_000):
-        buffer = io.StringIO()
-        batch.write_csv(buffer)
-        buffer.seek(0)
+        for batch in lazy_df.collect(engine="streaming").iter_slices(100_000):
+            buffer = io.StringIO()
+            batch.write_csv(buffer)
+            buffer.seek(0)
 
-        cur.copy_expert(
-            "COPY links_raw (link_id, geo_json) FROM STDIN WITH CSV HEADER",
-            buffer
-        )
-        conn.commit()
-
-    cur.execute("""
-        INSERT INTO links (id, geom)
-        SELECT
-            link_id,
-            ST_LineMerge(
-                ST_SetSRID(
-                    ST_GeomFromGeoJSON(geo_json),
-                    4326
-                )
+            cur.copy_expert("COPY links_raw (link_id, geo_json, road_name) FROM STDIN WITH CSV HEADER",
+                buffer
             )
-        FROM links_raw
-        ON CONFLICT (id) DO NOTHING
-    """)
 
-    cur.execute("DROP TABLE links_raw")
-    cur.close()
+        cur.execute("""
+            INSERT INTO links (id, geom, road_name)
+            SELECT
+                link_id,
+                ST_LineMerge(
+                    ST_SetSRID(
+                        ST_GeomFromGeoJSON(geo_json),
+                        4326
+                    )
+                ),
+                road_name
+            FROM links_raw
+            ON CONFLICT (id) DO NOTHING
+        """)
+
+        cur.execute("DROP TABLE links_raw")
+        cur.close()
+        session.commit()
 
 
 def ingest_speed_records():
-    cur = conn.cursor()
-    lazy_df = (
-        pl.scan_parquet(SPEED_RECORDS_PARQUET).select(["date_time", "average_speed", "link_id", "day_of_week", "period"])
-    )
 
-    for batch in lazy_df.collect(engine="streaming").iter_slices(n_rows=100_000):
-        buffer = io.StringIO()
-        batch.write_csv(buffer)
-        buffer.seek(0)
+    with get_session() as session:
+        cur = session.connection().connection.cursor()
 
-        cur.copy_expert(
-            "COPY speed_records (timestamp, speed, link_id, day_of_week, period) FROM STDIN WITH CSV HEADER",
-            buffer
+        cur.execute(""" CREATE TEMP TABLE speed_records_raw ( timestamp TIMESTAMP, speed float8, link_id BIGINT, day_of_week INT, period INT) """)
+
+        
+        lazy_df = (
+            pl.scan_parquet(FILENAME_SPEED_RECORDS_PARQUET).select(["date_time", "average_speed", "link_id", "day_of_week", "period"])
         )
-        conn.commit()
 
-    cur.close()
+        for batch in lazy_df.collect(engine="streaming").iter_slices(n_rows=100_000):
+            buffer = io.StringIO()
+            batch.write_csv(buffer)
+            buffer.seek(0)
+
+            cur.copy_expert(
+                "COPY speed_records_raw (timestamp, speed, link_id, day_of_week, period) FROM STDIN WITH CSV HEADER",
+                buffer
+            )
+
+
+
+        cur.execute("""
+            INSERT INTO speed_records (timestamp, speed, link_id, day_of_week, period)
+            SELECT *
+            FROM speed_records_raw
+            ON CONFLICT (timestamp, link_id) DO NOTHING
+        """)
+
+        cur.execute("DROP TABLE speed_records_raw")
+        cur.close()
+        session.commit()
 
 
 ##################################################
 start_time = time.perf_counter()         # TIMER #
 ##################################################
 
+
+download_parquet_file_from_cdn(FILENAME_LINKS_PARQUET, "https://cdn.urbansdk.com/data-engineering-interview/link_info.parquet.gz")
+
+download_parquet_file_from_cdn(FILENAME_SPEED_RECORDS_PARQUET, "https://cdn.urbansdk.com/data-engineering-interview/duval_jan1_2024.parquet.gz")
+
+init_db(DATABASE_URL)
 ingest_links()
 ingest_speed_records()
-
-conn.close()
 
 
 ####################################################
