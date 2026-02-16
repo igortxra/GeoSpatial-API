@@ -1,5 +1,5 @@
 [project]
-name = "GeoSpatial API"
+name = "GeoSpatialAPI"
 version = "0.1.0"
 description = "Provide spatial insights from traffic speed data."
 readme = "README.md"
@@ -12,6 +12,7 @@ dependencies = [
     "jupyterlab>=4.5.4",
     "notebook>=7.5.3",
     "pip>=26.0.1",
+    "polars>=1.38.1",
     "psycopg2-binary>=2.9.11",
     "pyarrow>=23.0.0",
     "python-dotenv>=1.2.1",
