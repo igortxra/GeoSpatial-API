@@ -7,16 +7,15 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.129.0",
     "geoalchemy2>=0.18.1",
-    "ipython==7.23.1",
-    "isort>=7.0.0",
-    "jupyterlab>=4.5.4",
-    "notebook>=7.5.3",
-    "pip>=26.0.1",
     "polars>=1.38.1",
     "psycopg2-binary>=2.9.11",
-    "pyarrow>=23.0.0",
-    "python-dotenv>=1.2.1",
-    "ruff>=0.15.1",
+    "pydantic-settings>=2.13.0",
     "sqlalchemy>=2.0.46",
     "uvicorn[standard]>=0.40.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.1",
+    "isort>=7.0.0",
 ]

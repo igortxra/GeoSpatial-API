@@ -1,4 +1,4 @@
-import os
+from functools import lru_cache
 from typing import Annotated, List
 
 from fastapi import Depends, FastAPI
@@ -8,11 +8,16 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func, select
 
+from src.settings import Settings
 from src.db import Link, SpeedRecord, get_session, init_db
 from src.types import Period, Weekday
 
-SessionDep = Annotated[Session, Depends(get_session)]
 
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+SessionDep = Annotated[Session, Depends(get_session)]
 
 class SpatialFilterRequest(BaseModel):
     day: str
@@ -25,7 +30,8 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def on_startup():
-        init_db(os.getenv("DATABASE_URL", ""))  # TODO: Improve
+        settings = get_settings()
+        init_db(settings.database_url)
 
     @app.get("/")
     def index():

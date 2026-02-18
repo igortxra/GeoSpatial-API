@@ -1,12 +1,17 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-alpine
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY pyproject.toml uv.lock .
 
-RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+ENV UV_NO_DEV=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-CMD ["uvicorn", "src:create_app", "--host", "0.0.0.0", "--port", "8000"]
+RUN uv sync --locked
+
+COPY src ./src
+
+CMD ["uv", "run", "uvicorn", "src:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
 

@@ -1,8 +1,11 @@
-version: "3.9"
-
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uv run uvicorn src:create_app --factory --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./src:/app/src
     container_name: GeoSpatialAPI
     ports:
       - "8000:8000"
@@ -11,8 +14,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/app
-    volumes:
-      - .:/app
 
   db:
     image: postgis/postgis:15-3.4
