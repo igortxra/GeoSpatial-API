@@ -4,5 +4,8 @@ format:
 check:
 	uv run ruff check ./src/
 
-update_requirements:
-	uv pip freeze > requirements.txt
+up:
+	docker compose up
+
+down: 
+	docker compose down
