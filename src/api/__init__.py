@@ -8,9 +8,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func, select
 
+from src.database import get_session, init_db
+from src.database.models import Link, SpeedRecord
+from src.domain import Period, Weekday
 from src.settings import Settings
-from src.db import Link, SpeedRecord, get_session, init_db
-from src.types import Period, Weekday
 
 
 @lru_cache
