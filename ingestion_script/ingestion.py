@@ -3,13 +3,13 @@ import os
 import time
 
 import polars as pl
+import psycopg
 import requests
 
-from src.db import get_session, init_db
-
-DATABASE_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/app"
+DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/app"
 FILENAME_LINKS_PARQUET = "./links.parquet.gz"
 FILENAME_SPEED_RECORDS_PARQUET = "./speed_records.parquet.gz"
+
 
 def download_parquet_file_from_cdn(path_to_download, file_url):
     if not os.path.exists(path_to_download):
@@ -17,10 +17,11 @@ def download_parquet_file_from_cdn(path_to_download, file_url):
             with open(path_to_download, mode="wb") as file:
                  for chunk in response.iter_content(chunk_size=10 * 1024):
                      file.write(chunk)
+                    
 
-def ingest_links():
-    with get_session() as session:
-        cur = session.connection().connection.cursor()
+def ingest_links(conn):
+
+    with conn.cursor() as cur:
         cur.execute(""" CREATE TEMP TABLE links_raw ( link_id BIGINT, geo_json TEXT, road_name TEXT) """)
 
         columns = ["link_id", "geo_json", "road_name"]
@@ -31,10 +32,10 @@ def ingest_links():
             buffer = io.StringIO()
             batch.write_csv(buffer)
             buffer.seek(0)
+            
+            with cur.copy("COPY links_raw (link_id, geo_json, road_name) FROM STDIN WITH CSV HEADER") as copy:
+                copy.write(buffer.getvalue())
 
-            cur.copy_expert("COPY links_raw (link_id, geo_json, road_name) FROM STDIN WITH CSV HEADER",
-                buffer
-            )
 
         cur.execute("""
             INSERT INTO links (id, geom, road_name)
@@ -52,14 +53,10 @@ def ingest_links():
         """)
 
         cur.execute("DROP TABLE links_raw")
-        cur.close()
-        session.commit()
 
+def ingest_speed_records(conn):
 
-def ingest_speed_records():
-
-    with get_session() as session:
-        cur = session.connection().connection.cursor()
+    with conn.cursor() as cur:
 
         cur.execute(""" CREATE TEMP TABLE speed_records_raw ( timestamp TIMESTAMP, speed float8, link_id BIGINT, day_of_week INT, period INT) """)
 
@@ -73,10 +70,8 @@ def ingest_speed_records():
             batch.write_csv(buffer)
             buffer.seek(0)
 
-            cur.copy_expert(
-                "COPY speed_records_raw (timestamp, speed, link_id, day_of_week, period) FROM STDIN WITH CSV HEADER",
-                buffer
-            )
+            with cur.copy("COPY speed_records_raw (timestamp, speed, link_id, day_of_week, period) FROM STDIN WITH CSV HEADER") as copy:
+                copy.write(buffer.getvalue())
 
 
 
@@ -88,8 +83,6 @@ def ingest_speed_records():
         """)
 
         cur.execute("DROP TABLE speed_records_raw")
-        cur.close()
-        session.commit()
 
 
 ##################################################
@@ -101,9 +94,10 @@ download_parquet_file_from_cdn(FILENAME_LINKS_PARQUET, "https://cdn.urbansdk.com
 
 download_parquet_file_from_cdn(FILENAME_SPEED_RECORDS_PARQUET, "https://cdn.urbansdk.com/data-engineering-interview/duval_jan1_2024.parquet.gz")
 
-init_db(DATABASE_URL)
-ingest_links()
-ingest_speed_records()
+with psycopg.connect(DATABASE_URL) as conn:
+    ingest_links(conn)
+    ingest_speed_records(conn)
+    conn.commit()
 
 
 ####################################################

@@ -34,9 +34,9 @@ def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep
     stmt = (
         select(
             Link.id,
-            func.min(Link.road_name).label("road_name"),
+            Link.road_name,
             func.avg(SpeedRecord.speed).label("average_speed"),
-            cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
+            cast(func.ST_AsGeoJSON(Link.geom), JSONB).label(
                 "geometry"
             ),
         )
@@ -47,6 +47,19 @@ def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep
         )
         .group_by(Link.id)
     )
+    # stmt = (
+    #     select(
+    #         Link.id,
+    #         Link.road_name,
+    #         SpeedAggregate.avg_speed.label("average_speed"),
+    #         cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
+    #     )
+    #     .join(SpeedAggregate, Link.id == SpeedAggregate.link_id)
+    #     .where(
+    #         SpeedAggregate.day_of_week == weekday_code,
+    #         SpeedAggregate.period == period_code,
+    #     )
+    # )
 
     result = session.execute(stmt).mappings().all()
 
@@ -67,7 +80,7 @@ def spatial_filter(payload: SpatialFilterRequest, session: SessionDep):
     stmt = (
         select(
             func.distinct(Link.id).label("id"),
-            func.min(Link.road_name).label("road_name"),
+            Link.road_name,
             func.avg(SpeedRecord.speed).label("average_speed"),
             cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
         )
@@ -101,7 +114,7 @@ def get_aggregate_by_link(
     stmt = (
         select(
             Link.id,
-            func.min(Link.road_name).label("road_name"),
+            Link.road_name,
             func.avg(SpeedRecord.speed).label("average_speed"),
             cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
                 "geometry"
@@ -132,7 +145,7 @@ def get_slow_links(
     stmt = (
         select(
             Link.id,
-            func.min(Link.road_name).label("road_name"),
+            Link.road_name,
             cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
         )
         .join(SpeedRecord, SpeedRecord.link_id == Link.id)
