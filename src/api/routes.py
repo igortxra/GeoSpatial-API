@@ -22,10 +22,12 @@ def index():
     return {"message": "up and running..."}
 
 
-@router.get("/aggregates/", response_model=List[RoadAggregatedResponse], tags=["Aggregations"])
+@router.get(
+    "/aggregates/", response_model=List[RoadAggregatedResponse], tags=["Aggregations"]
+)
 def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep):
     """Return aggregated average speed per link for the given day and time period."""
-    
+
     period_code = Period.from_period_option(period).value
     weekday_code = Weekday.from_weekday_option(day).value
 
@@ -50,7 +52,12 @@ def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep
 
     return result
 
-@router.post("/aggregates/spatial_filter/", response_model=List[RoadAggregatedResponse], tags=["Aggregations"])
+
+@router.post(
+    "/aggregates/spatial_filter/",
+    response_model=List[RoadAggregatedResponse],
+    tags=["Aggregations"],
+)
 def spatial_filter(payload: SpatialFilterRequest, session: SessionDep):
     """Return road segments intersecting the bounding box for the given day and period."""
     xmin, ymin, xmax, ymax = payload.bbox
@@ -78,8 +85,15 @@ def spatial_filter(payload: SpatialFilterRequest, session: SessionDep):
     result = session.execute(stmt).mappings().all()
     return result
 
-@router.get("/aggregates/{link_id}", response_model=RoadAggregatedResponse, tags=["Aggregations"])
-def get_aggregate_by_link(link_id: str, day: WeekdayOption, period: PeriodOption, session: SessionDep):
+
+@router.get(
+    "/aggregates/{link_id}",
+    response_model=RoadAggregatedResponse,
+    tags=["Aggregations"],
+)
+def get_aggregate_by_link(
+    link_id: str, day: WeekdayOption, period: PeriodOption, session: SessionDep
+):
     """Return speed and metadata for a single road segment."""
     period_code = Period.from_period_option(period).value
     weekday_code = Weekday.from_weekday_option(day).value
@@ -97,7 +111,7 @@ def get_aggregate_by_link(link_id: str, day: WeekdayOption, period: PeriodOption
         .where(
             Link.id == link_id,
             SpeedRecord.day_of_week == weekday_code,
-            SpeedRecord.period == period_code
+            SpeedRecord.period == period_code,
         )
         .group_by(Link.id)
     )
@@ -105,6 +119,7 @@ def get_aggregate_by_link(link_id: str, day: WeekdayOption, period: PeriodOption
     result = session.execute(stmt).mappings().first()
 
     return result
+
 
 @router.get("/patterns/slow_links/", tags=["Patterns"])
 def get_slow_links(
@@ -130,12 +145,10 @@ def get_slow_links(
             func.date_part("week", SpeedRecord.timestamp),
         )
         .having(
-            func.count(func.distinct(cast(SpeedRecord.timestamp, Date)))
-            >= min_days,
+            func.count(func.distinct(cast(SpeedRecord.timestamp, Date))) >= min_days,
             func.avg(SpeedRecord.speed) <= threshold,
         )
     )
 
     result = session.execute(stmt).mappings().all()
     return result
-

@@ -1,5 +1,5 @@
 format: 
-	uv run isort ./src/
+	uv run isort src && uv run pyink src
 
 check:
 	uv run ruff check ./src/

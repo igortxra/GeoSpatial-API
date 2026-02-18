@@ -1,9 +1,6 @@
-from datetime import datetime
 
-from geoalchemy2 import Geometry
-from sqlalchemy import (Column, DateTime, Engine, Float, ForeignKey, Integer,
-                        String, UniqueConstraint, create_engine)
-from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
+from sqlalchemy import (Engine, create_engine)
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 
 class Base(DeclarativeBase):

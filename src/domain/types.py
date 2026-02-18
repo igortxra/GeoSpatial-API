@@ -1,7 +1,11 @@
 from enum import Enum
 from typing import Literal
 
-WeekdayOption = Literal["Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"]
+WeekdayOption = Literal[
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"
+]
+
+
 class Weekday(Enum):
     MONDAY = 1
     TUESDAY = 2
@@ -16,9 +20,17 @@ class Weekday(Enum):
         return cls[day.upper()]
 
 
+PeriodOption = Literal[
+    "Overnight",
+    "Early Morning",
+    "AM Peak",
+    "Midday",
+    "Early Afternoon",
+    "PM Peak",
+    "Evening",
+]
 
 
-PeriodOption = Literal["Overnight", "Early Morning", "AM Peak", "Midday", "Early Afternoon", "PM Peak", "Evening"]
 class Period(Enum):
     OVERNIGHT = 1
     EARLY_MORNING = 2
@@ -35,5 +47,3 @@ class Period(Enum):
         if period_code is None:
             raise Exception(f"Invalid period {normalized}")
         return period_code
-
-
