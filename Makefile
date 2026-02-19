@@ -15,7 +15,7 @@ notebook:
 	uv sync --group=notebook
 	
 	# Start Jupyter Notebook server
-	uv run jupyter notebook ./jupyter-notebook/original.ipynb
+	uv run jupyter notebook ./jupyter_notebook/original.ipynb
 	
 	# Uninstall Jupyter Notebook dependencies
 	uv sync --no-group=notebook

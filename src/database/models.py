@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from geoalchemy2 import Geometry
-from sqlalchemy import (Column, DateTime, Float, ForeignKey, Integer, String,
-                        UniqueConstraint)
+from sqlalchemy import (Column, DateTime, Float, ForeignKey, Index, Integer,
+                        String, UniqueConstraint)
 from sqlalchemy.orm import relationship
 
 from src.database import Base
@@ -33,12 +33,11 @@ class SpeedRecord(Base):
 
     __table_args__ = (
         UniqueConstraint("timestamp", "link_id", name="uq_speedrecord_ts_link"),
+        Index(
+            "idx_speed_records_covering",
+            "day_of_week",
+            "period",
+            "link_id",
+            postgresql_include=["speed"],
+        )
     )
-
-# class SpeedAggregate(Base):
-#     __tablename__ = "speed_aggregates"
-#
-#     link_id = Column(Integer, primary_key=True)
-#     avg_speed = Column(Float)
-#     day_of_week = Column(Integer, primary_key=True)
-#     period = Column(Integer, primary_key=True)

@@ -47,19 +47,6 @@ def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep
         )
         .group_by(Link.id)
     )
-    # stmt = (
-    #     select(
-    #         Link.id,
-    #         Link.road_name,
-    #         SpeedAggregate.avg_speed.label("average_speed"),
-    #         cast(func.ST_AsGeoJSON(Link.geom), JSONB).label("geometry"),
-    #     )
-    #     .join(SpeedAggregate, Link.id == SpeedAggregate.link_id)
-    #     .where(
-    #         SpeedAggregate.day_of_week == weekday_code,
-    #         SpeedAggregate.period == period_code,
-    #     )
-    # )
 
     result = session.execute(stmt).mappings().all()
 
@@ -116,7 +103,7 @@ def get_aggregate_by_link(
             Link.id,
             Link.road_name,
             func.avg(SpeedRecord.speed).label("average_speed"),
-            cast(func.ST_AsGeoJSON(func.ST_LineMerge(Link.geom)), JSONB).label(
+            cast(func.ST_AsGeoJSON(Link.geom), JSONB).label(
                 "geometry"
             ),
         )

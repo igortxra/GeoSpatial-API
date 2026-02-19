@@ -9,6 +9,7 @@ dependencies = [
     "geoalchemy2>=0.18.1",
     "psycopg2-binary>=2.9.11",
     "pydantic-settings>=2.13.0",
+    "shapely>=2.1.2",
     "sqlalchemy>=2.0.46",
     "uvicorn[standard]>=0.40.0",
 ]
