@@ -1,4 +1,6 @@
 # GeoSpatial API for Traffic Speed Data
+<img width="1101" height="516" alt="Pasted image 20260219112151" src="https://github.com/user-attachments/assets/a85d9d71-7714-4fa6-83a2-0d3663bff31f" />
+
 ## What is
 **FastAPI microservice** ([See](./src))
 - Implements **RESTful API** endpoints for **spatial and temporal aggregation**
