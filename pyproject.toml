@@ -7,16 +7,25 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.129.0",
     "geoalchemy2>=0.18.1",
-    "polars>=1.38.1",
     "psycopg2-binary>=2.9.11",
     "pydantic-settings>=2.13.0",
-    "pyink>=25.12.0",
     "sqlalchemy>=2.0.46",
     "uvicorn[standard]>=0.40.0",
 ]
 
 [dependency-groups]
 dev = [
+    "pyink>=25.12.0",
     "ruff>=0.15.1",
     "isort>=7.0.0",
+]
+ingestion = [
+    "polars>=1.38.1",
+    "psycopg>=3.3.3",
+    "requests>=2.32.5",
+]
+notebook = [
+    "jupyter>=1.1.1",
+    "nbconvert[webpdf]>=7.17.0",
+    "notebook>=7.5.3",
 ]
