@@ -10,6 +10,9 @@ up:
 down: 
 	docker compose down
 
+clean:
+	docker compose down --volumes --remove-orphans
+
 notebook:
 	# Install Jupyter Notebook dependencies
 	uv sync --group=notebook

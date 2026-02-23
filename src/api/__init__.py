@@ -5,8 +5,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from src.api.routes import router
-from src.database import init_db
-from src.settings import Settings
+from src.database import create_db_and_tables
 
 
 def create_app() -> FastAPI:
@@ -15,8 +14,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def on_startup():
-        settings = Settings.get()
-        init_db(settings.database_url)
+        create_db_and_tables()
 
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next):

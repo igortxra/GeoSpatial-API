@@ -1,12 +1,12 @@
-from datetime import datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (Column, DateTime, Float, ForeignKey, Index, Integer,
                         String, UniqueConstraint)
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import DeclarativeBase, relationship
 
-from src.database import Base
 
+class Base(DeclarativeBase):
+    pass
 
 class Link(Base):
     __tablename__ = "links"
@@ -22,7 +22,7 @@ class SpeedRecord(Base):
     __tablename__ = "speed_records"
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime)
     speed = Column(Float, nullable=False)
     day_of_week = Column(Integer, nullable=False)
     period = Column(Integer, nullable=False)
