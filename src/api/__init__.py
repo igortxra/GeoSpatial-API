@@ -1,7 +1,6 @@
 import time
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from src.api.routes import router
@@ -24,7 +23,10 @@ def create_app() -> FastAPI:
         response.headers["X-Process-Time"] = str(process_time)
         return response
 
-    app.include_router(router)
+    @app.get("/", tags=["Healthy Check"])
+    def index():
+        return {"message": "up and running..."}
+        app.include_router(router)
 
     # NOTE: Keep it after all routes
     app.openapi_schema = get_openapi(

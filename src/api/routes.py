@@ -17,9 +17,6 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 router = APIRouter()
 
-@router.get("/", tags=["Healthy Check"])
-def index():
-    return {"message": "up and running..."}
 
 
 @router.get(
