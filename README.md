@@ -25,8 +25,8 @@
 
 ### Running
 ```bash
-uv sync
 make up 
+make migration
 make ingestion 
 make notebook
 ```

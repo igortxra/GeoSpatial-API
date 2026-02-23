@@ -1,12 +1,20 @@
-
 from geoalchemy2 import Geometry
-from sqlalchemy import (Column, DateTime, Float, ForeignKey, Index, Integer,
-                        String, UniqueConstraint)
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
 class Base(DeclarativeBase):
     pass
+
 
 class Link(Base):
     __tablename__ = "links"
@@ -39,5 +47,5 @@ class SpeedRecord(Base):
             "period",
             "link_id",
             postgresql_include=["speed"],
-        )
+        ),
     )

@@ -1,5 +1,5 @@
 format: 
-	uv run isort src && uv run pyink src
+	uv run isort src alembic && uv run pyink src alembic
 
 check:
 	uv run ruff check ./src/
@@ -12,6 +12,9 @@ down:
 
 clean:
 	docker compose down --volumes --remove-orphans
+
+migration:
+	uv run alembic upgrade head
 
 notebook:
 	# Install Jupyter Notebook dependencies
@@ -30,3 +33,5 @@ ingestion:
 	uv run python ./ingestion_script/ingestion.py
 	# Uninstall ingestion script dependencies
 	uv sync --no-group=ingestion
+
+

@@ -5,6 +5,7 @@ description = "Provide spatial insights from traffic speed data."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.18.4",
     "fastapi>=0.129.0",
     "geoalchemy2>=0.18.1",
     "orjson>=3.11.7",
@@ -28,7 +29,23 @@ ingestion = [
     "requests>=2.32.5",
 ]
 notebook = [
+    "geopandas>=1.1.2",
     "jupyter>=1.1.1",
-    "nbconvert[webpdf]>=7.17.0",
+    "mapboxgl>=0.10.2",
     "notebook>=7.5.3",
+    "requests>=2.32.5",
+]
+
+
+[tool.alembic]
+
+# path to migration scripts.
+# this is typically a path given in POSIX (e.g. forward slashes)
+# format, relative to the token %(here)s which refers to the location of this
+# ini file
+script_location = "%(here)s/alembic"
+
+# additional paths to be prepended to sys.path. defaults to the current working directory.
+prepend_sys_path = [
+    "."
 ]
