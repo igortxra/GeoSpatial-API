@@ -8,6 +8,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     @lru_cache
-    @staticmethod
-    def get() -> "Settings":
-        return Settings()
+    @classmethod
+    def get(cls) -> "Settings":
+        return cls()

@@ -22,7 +22,7 @@ class SpeedRecord(Base):
     __tablename__ = "speed_records"
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
     speed = Column(Float, nullable=False)
     day_of_week = Column(Integer, nullable=False)
     period = Column(Integer, nullable=False)

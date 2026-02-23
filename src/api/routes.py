@@ -1,7 +1,8 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import cast, func, select
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import ORJSONResponse
+from sqlalchemy import JSON, cast, func, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 from sqlalchemy.types import Date
@@ -16,29 +17,28 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 router = APIRouter()
 
-
 @router.get("/", tags=["Healthy Check"])
 def index():
     return {"message": "up and running..."}
 
 
 @router.get(
-    "/aggregates/", response_model=List[RoadAggregatedResponse], tags=["Aggregations"]
+    "/aggregates/", response_class=ORJSONResponse, response_model=List[RoadAggregatedResponse], tags=["Aggregations"]
 )
 def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep):
     """Return aggregated average speed per link for the given day and time period."""
+
 
     period_code = Period.from_period_option(period).value
     weekday_code = Weekday.from_weekday_option(day).value
 
     stmt = (
         select(
+
             Link.id,
             Link.road_name,
             func.avg(SpeedRecord.speed).label("average_speed"),
-            cast(func.ST_AsGeoJSON(Link.geom), JSONB).label(
-                "geometry"
-            ),
+            func.ST_AsGeoJSON(Link.geom).cast(JSON).label("geometry")
         )
         .join(SpeedRecord, Link.id == SpeedRecord.link_id)
         .where(
@@ -48,9 +48,9 @@ def get_aggregates(day: WeekdayOption, period: PeriodOption, session: SessionDep
         .group_by(Link.id)
     )
 
-    result = session.execute(stmt).mappings().all()
-
-    return result
+    return session.execute(stmt).all()
+    raise HTTPException(status_code=404, detail="Item not found")
+    
 
 
 @router.post(
