@@ -6,10 +6,10 @@
 - Implements **RESTful API** endpoints for **spatial and temporal aggregation**
 - Uses **SQL Alchemy ORM** for all database interactions
 
-**Ingestion Script** ([See](./ingestion_script/ingestion.py))
+**Ingestion Script** ([See](./utils/ingestion.py))
 - Ingests and stores geospatial datasets (**parquet** files) using **PostgresSQL + PostGIS**
 
-**Jupyter Notebook** ([See](./jupyter_notebook/original.ipynb))
+**Jupyter Notebook** ([See](./utils/original.ipynb))
 - That demonstrate the API being consumed and the geospatial data being presented.
 
 **Documentations** ([See](./docs/))

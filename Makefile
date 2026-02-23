@@ -21,7 +21,7 @@ notebook:
 	uv sync --group=notebook
 	
 	# Start Jupyter Notebook server
-	uv run jupyter notebook ./jupyter_notebook/original.ipynb
+	uv run jupyter notebook ./utils/original.ipynb
 	
 	# Uninstall Jupyter Notebook dependencies
 	uv sync --no-group=notebook
@@ -30,8 +30,9 @@ ingestion:
 	# Install ingestion script dependencies
 	uv sync --group=ingestion
 	# Run ingestion script
-	uv run python ./ingestion_script/ingestion.py
+	uv run python ./utils/ingestion.py
 	# Uninstall ingestion script dependencies
 	uv sync --no-group=ingestion
 
-
+sql:
+	uv run alembic upgrade dba20e7e5d18:head --sql > ./setup.sql
